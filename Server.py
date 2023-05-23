@@ -13,6 +13,12 @@ clients = []
 nicknames = []
 
 
+def broadcastSentMessage(message, sender):
+    for client in clients:
+        if client != sender:
+            client.send(message)
+
+
 def broadcast(message):
     for client in clients:
         client.send(message)
@@ -23,7 +29,7 @@ def handle(client):
         try:
             message = client.recv(1024)
             print(message)
-            broadcast(message)
+            broadcastSentMessage(message, client)
         except:
             index = clients.index(client)
             clients.remove(client)
