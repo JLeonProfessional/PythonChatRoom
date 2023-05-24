@@ -13,6 +13,15 @@ clients = []
 nicknames = []
 
 
+def handleCommand(message):
+    message_elements = message.split(' ', 1)
+    command = message_elements[0]
+    if command.lower().startswith('!upper'):
+        return message_elements[1].upper()
+    else:
+        return message
+
+
 def broadcastSentMessage(message, sender):
     for client in clients:
         if client != sender:
@@ -28,8 +37,15 @@ def handle(client):
     while True:
         try:
             message = client.recv(1024)
-            print(message)
-            broadcastSentMessage(message, client)
+            string_message = message.decode('ascii')
+            message_elements = string_message.split(': ', 1)
+            message_contents = message_elements[1]
+            print(message_contents)
+            if message_contents.startswith('!'):
+                message_contents = handleCommand(message_contents)
+                message_elements[1] = message_contents
+            string_message = f'{message_elements[0]}: {message_elements[1]}'
+            broadcastSentMessage(string_message.encode('ascii'), client)
         except:
             index = clients.index(client)
             clients.remove(client)
