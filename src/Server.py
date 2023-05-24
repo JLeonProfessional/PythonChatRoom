@@ -1,8 +1,9 @@
 import threading
 import socket
+from StringHelper import encode, decode
 
 host = '127.0.0.1'
-port = 55555
+port = 55558
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((host, port))
@@ -37,7 +38,7 @@ def handle(client):
     while True:
         try:
             message = client.recv(1024)
-            string_message = message.decode('ascii')
+            string_message = decode(message)
             message_elements = string_message.split(': ', 1)
             message_contents = message_elements[1]
             print(message_contents)
@@ -45,13 +46,13 @@ def handle(client):
                 message_contents = handleCommand(message_contents)
                 message_elements[1] = message_contents
             string_message = f'{message_elements[0]}: {message_elements[1]}'
-            broadcastSentMessage(string_message.encode('ascii'), client)
+            broadcastSentMessage(encode(string_message), client)
         except:
             index = clients.index(client)
             clients.remove(client)
             client.close()
             nickname = nicknames[index]
-            broadcast(f'{nickname} left the chat!'.encode('ascii'))
+            broadcast(encode(f'{nickname} left the chat!'))
             nicknames.remove(nickname)
             break
 
@@ -61,14 +62,14 @@ def receive():
         client, address = server.accept()
         print(f"Connected with {str(address)}")
 
-        client.send("NICK".encode('ascii'))
-        nickname = client.recv(1024).decode('ascii')
+        client.send(encode("NICK"))
+        nickname = decode(client.recv(1024))
         nicknames.append(nickname)
         clients.append(client)
 
         print(f'Nickname of the client is {nickname}')
-        broadcast(f'{nickname} joined the chat'.encode('ascii'))
-        client.send(f'Connected to the server!'.encode('ascii'))
+        broadcast(encode(f'{nickname} joined the chat'))
+        client.send(encode(f'Connected to the server!'))
 
         thread = threading.Thread(target=handle, args=(client,))
         thread.start()

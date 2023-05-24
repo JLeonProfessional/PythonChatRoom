@@ -1,20 +1,22 @@
 import socket
 import threading
+from StringHelper import encode, decode
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 host = '127.0.0.1'
-port = 55555
+port = 55558
 
 nickname = input("Choose a nickname: ")
 client.connect((host, port))
 
+
 def receive():
     while True:
         try:
-            message = client.recv(1024).decode('ascii')
+            message = decode(client.recv(1024))
             if message == "NICK":
-                client.send(nickname.encode('ascii'))
+                client.send(encode(nickname))
             else:
                 print(message)
         except:
@@ -26,7 +28,7 @@ def receive():
 def write():
     while True:
         message = f'{nickname}: {input("")}'
-        client.send(message.encode('ascii'))
+        client.send(encode(message))
 
 
 receive_thread = threading.Thread(target=receive)
