@@ -1,5 +1,5 @@
 import unittest
-from src.StringHelper import encode, decode
+from src.StringHelper import *
 
 
 class TestStringMethods(unittest.TestCase):
