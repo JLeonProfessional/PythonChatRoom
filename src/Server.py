@@ -1,6 +1,6 @@
 import threading
 import socket
-from StringHelper import encode, decode
+from StringHelper import *
 
 host = '127.0.0.1'
 port = 55558
@@ -14,13 +14,33 @@ clients = []
 nicknames = []
 
 
-def handleCommand(message):
-    message_elements = message.split(' ', 1)
-    command = message_elements[0]
-    if command.lower().startswith('!upper'):
-        return message_elements[1].upper()
-    else:
-        return message
+def handle_exception(client):
+    index = clients.index(client)
+    clients.remove(client)
+    client.close()
+    nickname = nicknames[index]
+    broadcast(encode(f'{nickname} left the chat!'))
+    nicknames.remove(nickname)
+
+
+def request_client_information(client):
+    client.send(encode("NICK"))
+    nickname = decode(client.recv(1024))
+    nicknames.append(nickname)
+    clients.append(client)
+    return nickname
+
+
+def receive_message(client):
+    message = client.recv(1024)
+    string_message = decode(message)
+    message_elements = string_message.split(': ', 1)
+    message_contents = message_elements[1]
+    print(message_contents)
+    if message_contents.startswith('!'):
+        message_contents = handle_command(message_contents)
+        message_elements[1] = message_contents
+    return f'{message_elements[0]}: {message_elements[1]}'
 
 
 def broadcastSentMessage(message, sender):
@@ -37,38 +57,26 @@ def broadcast(message):
 def handle(client):
     while True:
         try:
-            message = client.recv(1024)
-            string_message = decode(message)
-            message_elements = string_message.split(': ', 1)
-            message_contents = message_elements[1]
-            print(message_contents)
-            if message_contents.startswith('!'):
-                message_contents = handleCommand(message_contents)
-                message_elements[1] = message_contents
-            string_message = f'{message_elements[0]}: {message_elements[1]}'
+            string_message = receive_message(client)
+            print(string_message)
             broadcastSentMessage(encode(string_message), client)
         except:
-            index = clients.index(client)
-            clients.remove(client)
-            client.close()
-            nickname = nicknames[index]
-            broadcast(encode(f'{nickname} left the chat!'))
-            nicknames.remove(nickname)
+            handle_exception(client)
             break
 
 
 def receive():
     while True:
         client, address = server.accept()
+
         print(f"Connected with {str(address)}")
 
-        client.send(encode("NICK"))
-        nickname = decode(client.recv(1024))
-        nicknames.append(nickname)
-        clients.append(client)
+        nickname = request_client_information(client)
 
         print(f'Nickname of the client is {nickname}')
+
         broadcast(encode(f'{nickname} joined the chat'))
+
         client.send(encode(f'Connected to the server!'))
 
         thread = threading.Thread(target=handle, args=(client,))
