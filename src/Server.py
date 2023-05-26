@@ -1,5 +1,7 @@
+import json
 import threading
 import socket
+import datetime
 from StringHelper import *
 
 host = '127.0.0.1'
@@ -33,14 +35,14 @@ def request_client_information(client):
 
 def receive_message(client):
     message = client.recv(1024)
-    string_message = decode(message)
-    message_elements = string_message.split(': ', 1)
-    message_contents = message_elements[1]
-    print(message_contents)
+    received_message = decode(message)
+    message_data = json.loads(received_message)
+    message_contents = message_data["message"]
     if message_contents.startswith('!'):
         message_contents = handle_command(message_contents)
-        message_elements[1] = message_contents
-    return f'{message_elements[0]}: {message_elements[1]}'
+    timestamp = datetime.datetime.fromtimestamp(message_data["time"])
+    datetime_string = timestamp.strftime("%Y-%m-%d %H:%M")
+    return f'[{datetime_string}] {message_data["name"]}: {message_contents}'
 
 
 def broadcastSentMessage(message, sender):
