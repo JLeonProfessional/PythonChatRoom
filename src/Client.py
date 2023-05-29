@@ -10,15 +10,29 @@ client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 host = '127.0.0.1'
 port = 55558
 
-nickname = input("Choose a nickname: ")
+username = input("Username: ")
+password = input("Password: ")
+
+
+nickname = ""
 client.connect((host, port))
+
+login_map = {
+            "username": username,
+            "password": password
+        }
+login_json = json.dumps(login_map)
+
+client.sendall(bytes(login_json,encoding="utf-8"))
 
 
 def receive():
+    global nickname
     while True:
         try:
             message = decode(client.recv(1024))
             if message == "NICK":
+                nickname = input("Enter nickname: ")
                 client.send(encode(nickname))
             else:
                 print(message)

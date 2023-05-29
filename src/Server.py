@@ -2,6 +2,8 @@ import json
 import threading
 import socket
 import datetime
+from mongo_setup import *
+from DataService import *
 from StringHelper import *
 
 host = '127.0.0.1'
@@ -70,6 +72,13 @@ def handle(client):
 def receive():
     while True:
         client, address = server.accept()
+
+        login_info = decode(client.recv(1024))
+        login_data = json.loads(login_info)
+        username = login_data["username"]
+        password = login_data["password"]
+        create_user(username, password)
+        print(f"{username}, {password}")
 
         print(f"Connected with {str(address)}")
 
